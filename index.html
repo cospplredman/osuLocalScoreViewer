@@ -2,12 +2,18 @@
 <input id="file_osudb" type="file">
 <br>
 <button onClick="parseosudb()">parse</button>
+<br>
+<p id="odbp"></p>
 <h3>Select scores.db:</h3>
 <input id="file_scoresdb" type="file">
 <br>
 <button onClick="parsescoresdb()">parse</button>
+<br>
+<p id="sdbp"></p>
 <br><br>
 <button onClick="update()">update table</button>
+<br>
+<p id="utp"></p>
 <table class="sortable">
 <thead>
       <tr>
@@ -72,7 +78,8 @@ let scoresdb;
 
 function update(){
 	document.getElementById("tb").innerHTML = "";
-	for(let i = 0; i != scoresdb.maps.length; i++){
+	let p = document.getElementById("utp");
+	antifreezeloop((i)=>{
 		let bm;
 		for(let j = 0; j != osudb.beatmaps.length; j++){
 			if(osudb.beatmaps[j].hash == scoresdb.maps[i].hash){
@@ -127,7 +134,8 @@ function update(){
 				"<a href=\"https://osu.ppy.sh/b/" + bm.beatmapID + "\">https://osu.ppy.sh/b/" + bm.beatmapID + "</a>"
 			].join("</td><td>") + "</td>";
 		}
-	}
+		p.innerText = (i+1)+"/"+scoresdb.maps.length + " " + ((i+1)/scoresdb.maps.length)*100 + "%";
+	},scoresdb.maps.length);
 }
 
 function parseosudb(){

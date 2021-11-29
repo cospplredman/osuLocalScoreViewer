@@ -4,6 +4,20 @@ function cast(src, type) {
     return new type(buffer);
 }
 
+function antifreezeloop(fn,itr,f = ()=>{},s=0,max=100){
+	requestAnimationFrame(
+		()=>{
+			let ts = new Date();
+			for(; s < itr && (new Date() - ts < max); s++)
+				fn(s);
+			if(s < itr)
+				antifreezeloop(fn,itr,f,s,max);
+			else
+				f();
+		}
+	);
+}
+
 class parser{
 	constructor(a){
 		this.buffer = a;
@@ -71,15 +85,17 @@ class parser{
 	}
 
 	parseScores(){
+		let p = document.getElementById("sdbp");
 		let q = {};
 		q.version = this.getInt();
 		q.maps = Array(this.getInt());
-		for(let i = 0; i != q.maps.length; i++){
+		antifreezeloop((i)=>{
 			q.maps[i] = {hash: this.getString()}
 			q.maps[i].scores = Array(this.getInt());
 			for(let j = 0; j != q.maps[i].scores.length; j++)
 				q.maps[i].scores[j] = this.getScore();
-		}
+			p.innerText = (i+1)+"/"+q.maps.length + " " + ((i+1)/q.maps.length)*100 + "%";
+		}, q.maps.length);
 		return q;
 	}
 
@@ -110,6 +126,7 @@ class parser{
 	}
 
 	parseOsuDB(){
+		let p = document.getElementById("odbp");
 		let q = {};
 		q.version = this.getInt();
 		q.FolderCount = this.getInt();
@@ -117,10 +134,10 @@ class parser{
 		q.Date = this.getLong();
 		q.PlayerName = this.getString();
 		q.beatmaps = Array(this.getInt());
-		for(let i = 0; i != q.beatmaps.length; i++){
+		antifreezeloop((i)=>{
 			q.beatmaps[i] = this.getBeatMap(q.version);
-		}
-		q.ri = this.getInt();
+			p.innerText = (i+1)+"/"+q.beatmaps.length + " " + ((i+1)/q.beatmaps.length)*100 + "%";
+		},q.beatmaps.length,()=>{q.ri = this.getInt();});
 		return q;
 	}
 
@@ -151,7 +168,7 @@ class parser{
                   for(let i = 0; i<4; i++) {
                     let length = this.getInt()
                     let diffs = {}
-                    for(let i=0; i<length; i++) {
+                    for(let j=0; j<length; j++) {
                         this.getByte()
                         let mode = this.getInt();
                         this.getByte();
