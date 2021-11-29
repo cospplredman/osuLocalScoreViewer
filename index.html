@@ -1,0 +1,155 @@
+<h3>Select osu!.db:</h3>
+<input id="file_osudb" type="file">
+<br>
+<button onClick="parseosudb()">parse</button>
+<h3>Select scores.db:</h3>
+<input id="file_scoresdb" type="file">
+<br>
+<button onClick="parsescoresdb()">parse</button>
+<br><br>
+<button onClick="update()">update table</button>
+<table class="sortable">
+<thead>
+      <tr>
+        <th>player</th>
+	<th>SR</th>
+	<th>fc</th>
+        <th>combo</th>
+	<th>acc</th>
+	<th>300</th>
+	<th>100</th>
+	<th>50</th>
+	<th>geki</th>
+	<th>katu</th>
+	<th>miss</th>
+	<th>score</th>
+	<th>mode</th>
+	<th>mods</th>
+	<th>CS</th>
+	<th>AR</th>
+	<th>HP</th>
+	<th>OD</th>
+	<th>beatmapID</th>
+	<th>scoreID</th>
+        <th>mapname</th>
+        <th>difficulty</th>
+	<th>link</th>
+      </tr>
+     </thead>
+    <tbody id="tb">
+	<tr>
+	<td></td> <!-- player -->
+	<td>0</td> <!-- sr -->
+	<td></td> <!-- fc -->
+	<td>0</td> <!-- combo --> 
+	<td>0</td> <!-- acc -->
+	<td>0</td> <!-- 300 -->
+	<td>0</td> <!-- 100 -->
+	<td>0</td> <!-- 50 -->
+	<td>0</td> <!-- geki -->
+	<td>0</td> <!-- katu -->
+	<td>0</td> <!-- miss -->
+	<td>0</td> <!-- score -->
+	<td></td> <!-- mode -->
+	<td></td> <!-- mods -->
+	<td>0</td> <!-- cs -->
+	<td>0</td> <!-- ar -->
+	<td>0</td> <!-- hp -->
+	<td>0</td> <!-- od -->
+	<td>0</td> <!-- beatmapID -->
+	<td>0</td> <!-- scoreID -->
+	<td></td> <!-- mapname -->
+	<td></td> <!-- difficulty -->
+	<td></td> <!-- link -->
+	</tr>
+    </tbody>
+</table>
+<link rel="stylesheet" href="table.css">
+<script src="table.js"></script>
+<script>
+let osudb;
+let scoresdb;
+
+function update(){
+	document.getElementById("tb").innerHTML = "";
+	for(let i = 0; i != scoresdb.maps.length; i++){
+		let bm;
+		for(let j = 0; j != osudb.beatmaps.length; j++){
+			if(osudb.beatmaps[j].hash == scoresdb.maps[i].hash){
+				bm = osudb.beatmaps[j];
+				j = osudb.beatmaps.length-1;
+			}
+		}
+		if(bm)
+		for(let j = 0; j != scoresdb.maps[i].scores.length; j++){
+			let mp = scoresdb.maps[i].scores[j];
+			document.getElementById("tb").insertRow(0);
+			document.getElementsByTagName("tbody")[0].rows[0].innerHTML = "<td>" + [
+				mp.player,
+				bm.diffs[bm.mode][mp.mods],
+				mp.fullcombo,
+				mp.combo,
+				(300*(mp[300]+mp.Gekis) + 100*(mp[100]+mp.Katus) + 50*mp[50])/(300*(mp[300] + mp[100] + mp[50] + mp.Gekis + mp.Katus + mp.miss)) * 100,
+				mp[300],
+				mp[100],
+				mp[50],
+				mp.Gekis,
+				mp.Katus,
+				mp.miss,
+				mp.score,
+				["Standard", "Taiko", "CTB", "Mania"][mp.mode],
+				(()=>{
+					let q = "";
+					if(mp.mods == 0) q = "NoMod";
+					if(mp.mods & 1) q += "NF";
+					if(mp.mods & 2) q += "EZ";
+					if(mp.mods & 8) q += "HD";
+					if(mp.mods & 16) q += "HR";
+					if(mp.mods & 16384) q += "PF"
+					else if(mp.mods & 32) q += "SD";
+					if(mp.mods & 128) q += "RX";
+					if(mp.mods & 256) q += "HT";
+					if(mp.mods & 512) q += "NC";
+					else if(mp.mods & 64) q += "DT";
+					if(mp.mods & 1024) q += "FL";
+					if(mp.mods & 2048) q += "Auto";
+					if(mp.mods & 4096) q += "SO";
+					return q;
+				})(),
+				bm.CS * ((mp.mods & 16) ? 1.3 : 1) * ((mp.mods & 2) ? 0.5 : 1),
+				bm.AR * ((mp.mods & 16) ? 1.4 : 1) * ((mp.mods & 2) ? 0.5 : 1),
+				bm.HP * ((mp.mods & 16) ? 1.4 : 1) * ((mp.mods & 2) ? 0.5 : 1),
+				bm.OD * ((mp.mods & 16) ? 1.4 : 1) * ((mp.mods & 2) ? 0.5 : 1),
+				bm.beatmapID,
+				mp.ScoreId,
+				bm.title,
+				bm.difficulty,
+				"<a href=\"https://osu.ppy.sh/b/" + bm.beatmapID + "\">https://osu.ppy.sh/b/" + bm.beatmapID + "</a>"
+			].join("</td><td>") + "</td>";
+		}
+	}
+}
+
+function parseosudb(){
+	osudbr.readAsArrayBuffer(osudbf.files[0], "UTF-8");
+}
+
+const osudbf = document.getElementById("file_osudb");
+const osudbr = new FileReader();
+osudbr.onload = function() {
+	osudb = new parser(new Uint8Array(osudbr.result)).parseOsuDB();
+}
+
+
+function parsescoresdb(){
+	scoresdbr.readAsArrayBuffer(scoresdbf.files[0], "UTF-8");
+}
+
+const scoresdbf = document.getElementById("file_scoresdb");
+const scoresdbr = new FileReader();
+scoresdbr.onload = function() {
+	scoresdb = new parser(new Uint8Array(scoresdbr.result)).parseScores();
+}
+
+</script>
+<script src="dbparser.js"></script>
