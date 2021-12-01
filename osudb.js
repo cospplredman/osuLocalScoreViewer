@@ -52,10 +52,7 @@ class osudb extends buffer{
 				difficulties[i] = diffs;
 				
 			}
-			beatmap.StandardSR = difficulties[0];
-			beatmap.TaikoSR = difficulties[1];
-			beatmap.CTBSR = difficulties[2];
-			beatmap.ManiaSR = difficulties[3];
+			beatmap.SR = difficulties;
 		}
 
 		beatmap.TimingPoints = new Array(this.parseInt());
