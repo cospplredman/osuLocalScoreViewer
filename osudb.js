@@ -53,7 +53,12 @@ class osudb extends buffer{
 				
 			}
 			beatmap.SR = difficulties;
+
 		}
+
+		beatmap.DrainTime = this.parseInt();
+		beatmap.ToatalTime = this.parseInt();
+		beatmap.AudioPreview = this.parseInt();
 
 		beatmap.TimingPoints = new Array(this.parseInt());
 		for(let i = 0; i != beatmap.TimingPoints.length; i++){
