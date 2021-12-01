@@ -63,3 +63,12 @@ function OsuModsToString(mods){
 function OsuModsSRAffecting(mods){
 	return mods & 521109842;
 }
+
+function OsuAcc(s){
+	return [
+		(300*(s[300]+s.Geki) + 100*(s[100]+s.Katu) + 50*s[50])/(300*(s[300] + s[100] + s[50] + s.Geki + s.Katu + s.Miss)),
+		(0.5*(s[100]) + s[300]) / (s.Miss + s[300] + s[100]),
+		(s[300] + s[100] + s[50]) / (s[300] + s[100] + s[50] + s.Miss + s.Geki + s.Katu),
+		(50*s[50] + 100*s.Katu + 200*s[100] + 300*(s.Geki + s[300])) / (300*(s[50] + s.Katu + s[100] + s.Geki + s[300] + s.Miss))
+	][s.Mode] * 100;
+}
