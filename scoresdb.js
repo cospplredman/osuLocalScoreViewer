@@ -21,7 +21,7 @@ class scoresdb extends buffer{
 		score.Combo = this.parseShort();
 		score.FullCombo = this.parseBool();
 		score.Mods = this.parseInt();
-		this.skipOsuStr();
+		this.parseOsuStr();
 		score.Date = this.parseLong();
 		this.i+=4;
 		score.ScoreID = this.parseLong();

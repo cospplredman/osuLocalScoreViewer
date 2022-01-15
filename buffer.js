@@ -1,4 +1,23 @@
+class OsuStr{
+	constructor(b,s,l){
+		this.buf = b;
+		this.s = s;
+		this.l = l;
+	}
+
+	toString(){
+		return OsuStr.td.decode(this.buf.subarray(this.s,this.s+this.l));
+	}
+
+	valueOf(){
+		return this.toString();
+	}
+}
+
+OsuStr.td = new TextDecoder();
+
 class buffer{
+
 	constructor(a){
 		this.ed = endianness();
 		let reader = new FileReader();
@@ -11,7 +30,6 @@ class buffer{
 		reader.readAsArrayBuffer(a, "UTF-8");
 		this.buffer = null;
 		this.dv = null;
-		this.td = Object.freeze(new TextDecoder());
 		this.i = 0;
 	}
 
@@ -27,25 +45,10 @@ class buffer{
   				r |= (byte & 127) << shift;
   				shift += 7;
 			}while((byte & 128) != 0);
-			str = {toString: ()=>{this.td.decode(this.buf.subarray(this.i,this.i+r))}};
+			str = new OsuStr(this.buf, this.i, r);
 			this.i += r;
 		}
 		return str;
-	}
-
-	skipOsuStr(i=this.i){
-		this.i = i;
-		if(this.parseByte() == 11){
-			let r = 0,
-			    shift = 0,
-			    byte;
-			do{
-  				byte = this.parseByte();
-  				r |= (byte & 127) << shift;
-  				shift += 7;
-			}while((byte & 128) != 0);
-			this.i+=r;
-		}
 	}
 
 	parseLong(i=this.i){
