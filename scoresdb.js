@@ -1,8 +1,6 @@
 class scoresdb extends buffer{
 	constructor(a){
 		super(a);
-		this.maps = null;
-		this.hashs = null;
 	}
 
 	parseScore(i=this.i){
@@ -42,28 +40,21 @@ class scoresdb extends buffer{
 		return map;
 	}
 
+	parseScoresDBHeader(i=this.i){
+		this.i=i;
+		let q = {};
+		q.version = this.parseInt();
+		q.maps = this.parseInt();
+		return q;
+	}
+
 	parseScoresDB(i=this.i){
 		this.i=i;
-		this.maps = Array(this.parseInt(4));
-		this.hashs = Array(this.maps.length);
-		i+=4;
-		//antifreezeloop((i)=>
-		for(let i = 0; i != this.maps.length; i++){
-			this.maps[i] = this.i;
-			this.hashs[i] = this.parseOsuStr();
-			let r = this.parseInt();
-			for(let j = 0; j != r; j++){
-				this.i+=5;
-				this.skipOsuStr();
-				this.skipOsuStr();
-				this.skipOsuStr();
-				this.i+=19;
-				let m = this.parseInt();
-				this.skipOsuStr();
-				this.i+=20;
-				if(m & 8388608)
-					c+=8;
-			}
-		}//, this.maps.length);
+		let q = this.parseScoresDBHeader();
+		q.maps = Array(q.maps);
+		for(let i = 0; i != q.maps.length; i++){
+			q.maps[i] = this.parseMapScores();
+		}
+		return q;
 	}
 }

@@ -1,54 +1,89 @@
-<h3>Select osu!.db:</h3>
-<input id="file_osudb" type="file">
-<br>
-<button onClick="parseosudb()">parse</button>
-<br>
-<p id="odbp"></p>
-<h3>Select scores.db:</h3>
-<input id="file_scoresdb" type="file">
-<br>
-<button onClick="parsescoresdb()">parse</button>
-<br>
-<br>
-<button onClick="update()">update table</button>
-<br>
-<div id="tablediv"></div>
-<link rel="stylesheet" href="styles.css">
-<script src="table.js"></script>
-<script src="sorttable.js"></script>
+<body style="overflow:hidden;margin:0;">
+	<div style="margin:10">
+		<div style="display: inline-block">
+			<h3>Select osu!.db:</h3>
+			<input id="file_osudb" type="file" onInput="parseosudb()"></input>
+		</div>
+		<div style="display: inline-block">
+			<h3>Select scores.db:</h3>
+			<input id="file_scoresdb" type="file" onInput="parsescoresdb()">
+		</div>
+	</div>
+	<div id="table"></div>
+</body>
+<link href="https://unpkg.com/tabulator-tables@5.0.10/dist/css/tabulator.min.css" rel="stylesheet">
+ <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.0.10/dist/js/tabulator.min.js"></script>
 <script src="buffer.js"></script>
-<script src="util.js"></script>
 <script src="osudb.js"></script>
 <script src="scoresdb.js"></script>
+<script src="util.js"></script>
 <script>
+
 let scores = null,
     beatmaps = null;
 
+let table = new Tabulator("#table", {
+    height:"100%",
+    columns:[
+    {title:"Player", field:"Player", sorter:"string"},
+    {title:"SR", field:"SR", sorter:"number"},
+    {title:"FC", field:"FC", sorter:"string"},
+    {title:"Combo", field:"Combo", sorter:"number"},
+    {title:"Acc", field:"Acc", sorter:"number"},
+    {title:"300", field:"300", sorter:"number"},
+    {title:"100", field:"100", sorter:"number"},
+    {title:"50", field:"50", sorter:"number"},
+    {title:"Geki", field:"Geki", sorter:"number"},
+    {title:"Katu", field:"Katu", sorter:"number"},
+    {title:"Miss", field:"Miss", sorter:"number"},
+    {title:"Score", field:"Score", sorter:"number"},
+    {title:"Mode", field:"Mode", sorter:"string"},
+    {title:"Mods", field:"Mods", sorter:"string"},
+    {title:"BeatmapID", field:"BeatmapID", sorter:"number"},
+    {title:"Mapname", field:"Mapname", sorter:"string"},
+    {title:"Difficulty", field:"Difficulty", sorter:"string"},
+    {title:"Link", field:"Link", sorter:"string"},
+    ],
+});
+
+document.body.onresize = () => {
+	table.setHeight(document.body.clientHeight - document.body.children[0].clientHeight - 20);
+}
+
+document.body.onresize();
+
 function parseosudb(){
 	beatmaps = new osudb(document.getElementById("file_osudb").files[0]);
-	beatmaps.onload = ()=>{beatmaps.parseOsuDB()};
+	beatmaps.onload = updateTable;
 }
 
 function parsescoresdb(){
 	scores = new scoresdb(document.getElementById("file_scoresdb").files[0]);
-	scores.onload = ()=>{scores.parseScoresDB()};
+	scores.onload = updateTable;
 }
 
-function update(){
-	let table = new sorttable();
-	table.headers = ["Player", "SR", "FC", "Combo", "Acc", "300", "100", "50", "Geki", "Katu", "Miss", "Score", "Mode", "Mods", "BeatmapID", "ScoreID", "Mapname", "Difficulty", "Link"];
+function updateTable(){
+	if(scores == null || beatmaps == null)
+		return;
 
-	let sHashs = scores.hashs,
-	    bHashs = beatmaps.hashs;
+	let bm = {};
+	let d = [];
 
-	for(let i = 0; i != sHashs.length; i++){
-		let j = bHashs.indexOf(sHashs[i]);
-		if(j != -1){
-			let b = beatmaps.parseBeatmap(beatmaps.beatmaps[j]),
-			    ss = scores.parseMapScores(scores.maps[i]).scores;
-			for(let k = 0; k != ss.length; k++){
-				let s = ss[k];
-				table.insertRow({
+	let bmh = beatmaps.parseOsuDBHeader();
+	for(let i = 0; i != bmh.beatmaps; i++){
+		let r = beatmaps.i;
+		let f = beatmaps.parseBeatmap();
+		bm[f.Hash] = r;
+	}
+
+	let q = scores.parseScoresDB().maps;
+
+	for(let i = 0; i != q.length; i++){
+		if(bm[q[i].Hash] != undefined)
+			for(let j = 0; j != q[i].scores.length; j++){
+				let b = beatmaps.parseBeatmap(bm[q[i].Hash]);
+				let s = q[i].scores[j];
+				d.push({
 					Player: s.Player,
 					SR: b.SR[s.Mode][OsuModsSRAffecting(s.Mods)] ?? 0,
 					FC: s.FullCombo,
@@ -67,13 +102,10 @@ function update(){
 					ScoreID: s.ScoreID,
 					Mapname: b.SongTitle,
 					Difficulty: b.Difficulty,
-					Link: "<a href=\"https://osu.ppy.sh/b/" + b.ID + "\">https://osu.ppy.sh/b/" + b.ID + "</a>"
-				});
+					Link: "https://osu.ppy.sh/b/" + b.ID
+				})
 			}
-		}
 	}
-		
-	console.log(table);
-	tablediv.replaceChildren(table.toHTML());	
+	table.setData(d);
 }
 </script>

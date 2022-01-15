@@ -1,13 +1,14 @@
 class osudb extends buffer{
 	constructor(a){
 		super(a);
-		this.beatmaps = null;
-		this.hashs = null;
 	}
 
 	parseBeatmap(i=this.i){
 		this.i = i;
 		let beatmap = {};
+		if(this.version < 20191106){
+			beatmap.entrySize = this.parseInt();
+		}
 		beatmap.Artist = this.parseOsuStr();
 		beatmap.uArtist = this.parseOsuStr();
 		beatmap.SongTitle = this.parseOsuStr();
@@ -99,52 +100,33 @@ class osudb extends buffer{
 			this.i+=2;
 		}
 
-		beatmap.LastModification2 = this.parseLong();
+		beatmap.LastModification2 = this.parseInt();
 		beatmap.ScrollSpeed = this.parseByte();
 
 		return beatmap;
 	}
 
+	parseOsuDBHeader(i=this.i){
+		this.i = i;
+		let q = {};
+		q.version = this.parseInt();
+		this.version = q.version;
+		q.folders = this.parseInt();
+		q.isunlocked = this.parseBool();
+		q.dateUnlocked = this.parseLong();
+		q.player = this.parseOsuStr();
+		q.beatmaps = this.parseInt();
+		return q;
+	}
+
 	parseOsuDB(i=this.i){
 		this.i = i;
-		this.version = this.parseInt();
-		this.i += 13;
-		this.skipOsuStr();
-		this.beatmaps = new Array(this.parseInt());
-		this.hashs = new Array(beatmaps.length);
-		//antifreezeloop((i)=>
-		for(let i = 0; i != this.beatmaps.length; i++){
-			this.beatmaps[i] = this.i;
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.hashs[i] = this.parseOsuStr();
-			this.skipOsuStr();
-			this.i+=27;
-			if(this.version >= 20140609){
-				this.i+=12;
-				this.i=14*this.parseInt()+this.i;
-				this.i=14*this.parseInt()+this.i;
-				this.i=14*this.parseInt()+this.i;
-				this.i=14*this.parseInt()+this.i;
-			}
-			this.i+=12;
-			this.i=17*this.parseInt()+this.i;
-			this.i+=23;
-			this.skipOsuStr();
-			this.skipOsuStr();
-			this.i+=2;
-			this.skipOsuStr();
-			this.i+=10;
-			this.skipOsuStr();
-			this.i+=18;
-			if(this.version < 20140609){
-				this.i+=2;
-			}
-		}//,this.beatmaps.length);
+		let q = this.parseOsuDBHeader();
+		q.beatmaps = new Array(q.beatmaps);
+		for(let i = 0; i != q.beatmaps.length; i++){
+			q.beatmaps[i] = this.parseBeatmap();
+		}
+		q.perms = this.parseInt();
+		return q;
 	}
 }

@@ -1,12 +1,17 @@
 class buffer{
 	constructor(a){
+		this.ed = endianness();
 		let reader = new FileReader();
 		reader.onload = () => {
-			this.buffer = new Uint8Array(reader.result);
+			this.buffer = Object.freeze(reader.result);
+			this.buf = new Int8Array(this.buffer);
+			this.dv = Object.freeze(new DataView(this.buffer));
 			(this.onload ?? (()=>{})) ();
 		}
 		reader.readAsArrayBuffer(a, "UTF-8");
 		this.buffer = null;
+		this.dv = null;
+		this.td = Object.freeze(new TextDecoder());
 		this.i = 0;
 	}
 
@@ -22,7 +27,7 @@ class buffer{
   				r |= (byte & 127) << shift;
   				shift += 7;
 			}while((byte & 128) != 0);
-			str = new TextDecoder().decode(this.buffer.slice(this.i,this.i+r));
+			str = {toString: ()=>{this.td.decode(this.buf.subarray(this.i,this.i+r))}};
 			this.i += r;
 		}
 		return str;
@@ -45,49 +50,49 @@ class buffer{
 
 	parseLong(i=this.i){
 		this.i = i;
-		let r = cast(this.buffer.slice(this.i,this.i+8),BigUint64Array)[0];
+		let r = this.dv.getBigInt64(i, this.ed);
 		this.i += 8;
 		return r;
 	}
 
 	parseInt(i=this.i){
 		this.i = i;
-		let r = cast(this.buffer.slice(this.i,this.i+4),Uint32Array)[0];
+		let r = this.dv.getInt32(i, this.ed);
 		this.i += 4;
 		return r;
 	}
 
 	parseShort(i=this.i){
 		this.i = i;
-		let r = cast(this.buffer.slice(this.i,this.i+2),Uint16Array)[0];
+		let r = this.dv.getInt16(i, this.ed);
 		this.i += 2;
 		return r;
 	}
 
 	parseByte(i=this.i){
 		this.i = i;
-		let r = this.buffer[this.i];
+		let r = this.dv.getInt8(i, this.ed);
 		this.i++;
 		return r;
 	}
 
 	parseBool(i=this.i){
 		this.i = i;
-		let r = !!this.buffer[this.i];
+		let r = !!this.dv.getInt8(i, this.ed);
 		this.i++;
 		return r;
 	}
 
 	parseDouble(i=this.i){
 		this.i = i;
-		let r = cast(this.buffer.slice(this.i,this.i+8),Float64Array)[0];
+		let r = this.dv.getFloat64(i, this.ed);
 		this.i += 8;
 		return r;
 	}
 
 	parseFloat(i=this.i){
 		this.i = i;
-		let r = cast(this.buffer.slice(this.i,this.i+4),Float32Array)[0];
+		let r = this.dv.getFloat32(i, this.ed);
 		this.i += 4;
 		return r;
 	}

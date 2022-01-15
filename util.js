@@ -1,22 +1,11 @@
-function cast(src, type) {
-    var buffer = new ArrayBuffer(src.byteLength);
-    var baseView = new src.constructor(buffer).set(src);
-    return new type(buffer);
-}
-
-function antifreezeloop(fn,itr,f = ()=>{},s=0,max=100){
-	requestAnimationFrame(
-		()=>{
-			let ts = new Date();
-			for(; s < itr && (new Date() - ts < max); s++)
-				fn(s);
-			if(s < itr)
-				antifreezeloop(fn,itr,f,s,max);
-			else
-				f();
-		}
-	);
-}
+function endianness(){
+	let uInt32 = new Uint32Array([0x11223344]);
+	let uInt8 = new Uint8Array(uInt32.buffer);
+ 
+	if(uInt8[0] === 0x44)
+		return true;
+	return false;
+};
 
 function OsuModsToString(mods){
 	let q = "";
